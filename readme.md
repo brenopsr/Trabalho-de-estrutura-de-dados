@@ -24,12 +24,12 @@ O programa inicia solicitando ao usuário o nome do arquivo de citações (por e
 ```mermaid
 flowchart LR
     Start([Início do Programa]) --> InputFile["Pedir e ler nome do arquivo CSV"]
-    InputFile --> MenuChoice{Menu Principal<br/>(1, 2, 3 ou 4)?}
-    MenuChoice -->|1| LoadData[Carregar arquivo e construir estruturas<br/>(vetor, BST, AVL)]
+    InputFile --> MenuChoice[Menu Principal]
+    MenuChoice -->|1| LoadData["Carregar arquivo e construir estruturas"]
     LoadData --> MenuChoice
-    MenuChoice -->|2| SearchP[Pesquisar palavra<br/>(vetor, BST, AVL)]
+    MenuChoice -->|2| SearchP["Pesquisar palavra"]
     SearchP --> MenuChoice
-    MenuChoice -->|3| SearchF[Buscar por frequência<br/>(construir AVL de frequência)]
+    MenuChoice -->|3| SearchF["Buscar por frequência"]
     SearchF --> MenuChoice
     MenuChoice -->|4| Exit([Encerrar programa])
 ```
@@ -50,11 +50,11 @@ Quando o usuário seleciona **Carregar arquivo**, a função `carregarArquivo()`
 ```mermaid
 flowchart LR
     OpenFile[Abrir arquivo de citações] --> ReadLine{Linha lida do arquivo?}
-    ReadLine -->|Sim| Clean["Remover pontuação<br/>e converter para minúsculo"]
+    ReadLine -->|Sim| Clean["Remover pontuação e converter para minúsculo"]
     Clean --> Split["Separar citação em palavras"]
-    Split --> InsertWords["Inserir cada palavra (>3 letras)<br/>nas estruturas (vetor, BST, AVL)"]
+    Split --> InsertWords["Inserir cada palavra (>3 letras) nas estruturas (vetor, BST, AVL)"]
     InsertWords --> ReadLine
-    ReadLine -->|Não (EOF)| CloseFile[Fechar arquivo e finalizar carga]
+    ReadLine -->|Não| CloseFile[Fechar arquivo e finalizar carga]
 ```
 
 **Processamento de cada linha/citação:** O arquivo é lido usando `fgets`. Antes de ler cada linha, é utilizada a função `ftell` para capturar a **posição (offset)** do início da linha no arquivo. Essa posição será armazenada e associada a cada palavra daquela citação, servindo como referência para posteriormente recuperar a citação completa. Em seguida, a linha lida é tratada: remove-se o caracter de newline `\n` do final, e usa-se `strtok` para separar a **citação** do restante (cada linha está no formato `"citação,filme,ano"`; o programa considera apenas o primeiro campo para indexar palavras). Obtida a string da citação, são aplicadas duas funções utilitárias:
@@ -96,13 +96,14 @@ Na opção **Pesquisar palavra**, a função `pesquisarPalavra()` em `main.c` é
 ```mermaid
 flowchart LR
     InputWord[Entrada da palavra a ser pesquisada] --> Lower[Converter palavra para minúsculo]
-    Lower --> SearchVec[Buscar palavra no Vetor (busca binária)]
+    Lower --> SearchVec[Buscar palavra no Vetor]
     SearchVec --> SearchBST[Buscar palavra na BST]
     SearchBST --> SearchAVL[Buscar palavra na AVL]
-    SearchAVL --> Found?{Palavra encontrada<br/>em pelo menos uma estrutura?}
-    Found? -->|Sim| OpenCSV[Abrir arquivo CSV original]
-    OpenCSV --> ShowQuotes[Para cada offset da palavra:<br/>ler linha e exibir citação completa]
-    Found? -->|Não| NotFound[Indicar que a palavra não foi encontrada]
+    SearchAVL --> Found{Palavra encontrada em pelo menos uma estrutura?}
+    Found -->|Sim| OpenCSV[Abrir arquivo CSV original]
+    OpenCSV --> ShowQuotes[Para cada offset da palavra: ler linha e exibir citação completa]
+    Found -->|Não| NotFound[Indicar que a palavra não foi encontrada]
+
 ```
 
 **Busca nas estruturas:** Após ler a palavra (com `scanf`), o programa a normaliza para minúsculo (`str_to_lower`) para garantir que a busca seja consistente com as palavras indexadas (todas as palavras foram armazenadas em minúsculo na fase de carga). Então realiza as três buscas:
@@ -145,15 +146,16 @@ O fluxo da busca por frequência é ilustrado a seguir:
 
 ```mermaid
 flowchart LR
-    StartFreq[Iniciar operação de busca por frequência] --> BuildTree[Construir árvore AVL por frequência<br/>(inserindo cada palavra do vetor)]
+    StartFreq[Iniciar operação de busca por frequência] --> BuildTree[Construir árvore AVL por frequência]
     BuildTree --> AskFreq[Ler do usuário a frequência desejada]
     AskFreq --> SearchFreq[Buscar nó com a frequência informada na AVL]
-    SearchFreq --> FoundFreq?{Nó (frequência) encontrado?}
-    FoundFreq? -->|Sim| ListWords[Listar todas as palavras<br/>armazenadas nesse nó]
-    FoundFreq? -->|Não| NoResultFreq[Informar que nenhuma palavra<br/>tem essa frequência]
+    SearchFreq --> FoundFreq{Nó com a frequência encontrado?}
+    FoundFreq -->|Sim| ListWords[Listar todas as palavras armazenadas nesse nó]
+    FoundFreq -->|Não| NoResultFreq[Informar que nenhuma palavra tem essa frequência]
     ListWords --> FreeTree[Liberar árvore de frequência da memória]
     NoResultFreq --> FreeTree
     FreeTree --> EndFreq[Retornar ao menu]
+
 ```
 
 **Construção da árvore de frequência:** Assim que a opção é escolhida, o programa cria uma nova árvore AVL de frequência percorrendo todas as entradas de palavras já carregadas (por exemplo, ele percorre o vetor de palavras). Para cada palavra (cada `WordEntry` no vetor), ele insere na árvore de frequência chamando `freq_avl_insert(freqTree, frequência, pointer_para_wordEntry)`. Essa função de inserção funciona assim:
